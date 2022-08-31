@@ -451,5 +451,92 @@ describe('yup', () => {
         expect(result.content).not.toContain(wantNotContain);
       }
     });
+
+    it('exports as const instead of func', async () => {
+      const schema = buildSchema(/* GraphQL */ `
+        input Say {
+          phrase: String!
+        }
+      `);
+      const result = await plugin(
+        schema,
+        [],
+        {
+          schema: 'yup',
+          validationSchemaExportType: 'const',
+        },
+        {}
+      );
+      expect(result.content).toContain('export const SaySchema: yup.SchemaOf<Say> = yup.object({');
+    });
+
+    it('generate both input & type, export as const', async () => {
+      const schema = buildSchema(/* GraphQL */ `
+        scalar Date
+        scalar Email
+        input UserCreateInput {
+          name: String!
+          date: Date!
+          email: Email!
+        }
+        type User {
+          id: ID!
+          name: String
+          age: Int
+          email: Email
+          isMember: Boolean
+          createdAt: Date!
+        }
+
+        type Mutation {
+          _empty: String
+        }
+
+        type Query {
+          _empty: String
+        }
+
+        type Subscription {
+          _empty: String
+        }
+      `);
+      const result = await plugin(
+        schema,
+        [],
+        {
+          schema: 'yup',
+          withObjectType: true,
+          scalarSchemas: {
+            Date: 'yup.date()',
+            Email: 'yup.string().email()',
+          },
+          validationSchemaExportType: 'const',
+        },
+        {}
+      );
+      const wantContains = [
+        // User Create Input
+        'export const UserCreateInputSchema: yup.SchemaOf<UserCreateInput> = yup.object({',
+        'name: yup.string().defined(),',
+        'date: yup.date().defined(),',
+        'email: yup.string().email().defined()',
+        // User
+        'export const UserSchema: yup.SchemaOf<User> = yup.object({',
+        "__typename: yup.mixed().oneOf(['User', undefined]),",
+        'id: yup.string().defined(),',
+        'name: yup.string(),',
+        'age: yup.number(),',
+        'isMember: yup.boolean(),',
+        'email: yup.string().email(),',
+        'createdAt: yup.date().defined()',
+      ];
+      for (const wantContain of wantContains) {
+        expect(result.content).toContain(wantContain);
+      }
+
+      for (const wantNotContain of ['Query', 'Mutation', 'Subscription']) {
+        expect(result.content).not.toContain(wantNotContain);
+      }
+    });
   });
 });
