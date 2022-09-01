@@ -43,11 +43,22 @@ export const MyZodSchemaVisitor = (schema: GraphQLSchema, config: ValidationSche
         ?.map(field => generateFieldMyZodSchema(config, tsVisitor, schema, field, 2))
         .join(',\n');
 
-      return new DeclarationBlock({})
-        .export()
-        .asKind('function')
-        .withName(`${name}Schema(): myzod.Type<${name}>`)
-        .withBlock([indent(`return myzod.object({`), shape, indent('})')].join('\n')).string;
+      switch (config.validationSchemaExportType) {
+        case 'const':
+          return new DeclarationBlock({})
+            .export()
+            .asKind('const')
+            .withName(`${name}Schema: myzod.Type<${name}>`)
+            .withContent(['myzod.object({', shape, '})'].join('\n')).string;
+
+        case 'function':
+        default:
+          return new DeclarationBlock({})
+            .export()
+            .asKind('function')
+            .withName(`${name}Schema(): myzod.Type<${name}>`)
+            .withBlock([indent(`return myzod.object({`), shape, indent('})')].join('\n')).string;
+      }
     },
     ObjectTypeDefinition: ObjectTypeDefinitionBuilder(config.withObjectType, (node: ObjectTypeDefinitionNode) => {
       const name = tsVisitor.convertName(node.name.value);
@@ -57,18 +68,36 @@ export const MyZodSchemaVisitor = (schema: GraphQLSchema, config: ValidationSche
         ?.map(field => generateFieldMyZodSchema(config, tsVisitor, schema, field, 2))
         .join(',\n');
 
-      return new DeclarationBlock({})
-        .export()
-        .asKind('function')
-        .withName(`${name}Schema(): myzod.Type<${name}>`)
-        .withBlock(
-          [
-            indent(`return myzod.object({`),
-            indent(`__typename: myzod.literal('${node.name.value}').optional(),`, 2),
-            shape,
-            indent('})'),
-          ].join('\n')
-        ).string;
+      switch (config.validationSchemaExportType) {
+        case 'const':
+          return new DeclarationBlock({})
+            .export()
+            .asKind('const')
+            .withName(`${name}Schema: myzod.Type<${name}>`)
+            .withContent(
+              [
+                `myzod.object({`,
+                indent(`__typename: myzod.literal('${node.name.value}').optional(),`, 2),
+                shape,
+                '})',
+              ].join('\n')
+            ).string;
+
+        case 'function':
+        default:
+          return new DeclarationBlock({})
+            .export()
+            .asKind('function')
+            .withName(`${name}Schema(): myzod.Type<${name}>`)
+            .withBlock(
+              [
+                indent(`return myzod.object({`),
+                indent(`__typename: myzod.literal('${node.name.value}').optional(),`, 2),
+                shape,
+                indent('})'),
+              ].join('\n')
+            ).string;
+      }
     }),
     EnumTypeDefinition: (node: EnumTypeDefinitionNode) => {
       const enumname = tsVisitor.convertName(node.name.value);

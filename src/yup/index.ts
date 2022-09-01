@@ -35,11 +35,22 @@ export const YupSchemaVisitor = (schema: GraphQLSchema, config: ValidationSchema
 
       const shape = node.fields?.map(field => generateFieldYupSchema(config, tsVisitor, schema, field, 2)).join(',\n');
 
-      return new DeclarationBlock({})
-        .export()
-        .asKind('function')
-        .withName(`${name}Schema(): yup.SchemaOf<${name}>`)
-        .withBlock([indent(`return yup.object({`), shape, indent('})')].join('\n')).string;
+      switch (config.validationSchemaExportType) {
+        case 'const':
+          return new DeclarationBlock({})
+            .export()
+            .asKind('const')
+            .withName(`${name}Schema: yup.SchemaOf<${name}>`)
+            .withContent(['yup.object({', shape, '})'].join('\n')).string;
+
+        case 'function':
+        default:
+          return new DeclarationBlock({})
+            .export()
+            .asKind('function')
+            .withName(`${name}Schema(): yup.SchemaOf<${name}>`)
+            .withBlock([indent(`return yup.object({`), shape, indent('})')].join('\n')).string;
+      }
     },
     ObjectTypeDefinition: ObjectTypeDefinitionBuilder(config.withObjectType, (node: ObjectTypeDefinitionNode) => {
       const name = tsVisitor.convertName(node.name.value);
@@ -47,18 +58,36 @@ export const YupSchemaVisitor = (schema: GraphQLSchema, config: ValidationSchema
 
       const shape = node.fields?.map(field => generateFieldYupSchema(config, tsVisitor, schema, field, 2)).join(',\n');
 
-      return new DeclarationBlock({})
-        .export()
-        .asKind('function')
-        .withName(`${name}Schema(): yup.SchemaOf<${name}>`)
-        .withBlock(
-          [
-            indent(`return yup.object({`),
-            indent(`__typename: yup.mixed().oneOf(['${node.name.value}', undefined]),`, 2),
-            shape,
-            indent('})'),
-          ].join('\n')
-        ).string;
+      switch (config.validationSchemaExportType) {
+        case 'const':
+          return new DeclarationBlock({})
+            .export()
+            .asKind('const')
+            .withName(`${name}Schema: yup.SchemaOf<${name}>`)
+            .withContent(
+              [
+                `yup.object({`,
+                indent(`__typename: yup.mixed().oneOf(['${node.name.value}', undefined]),`, 2),
+                shape,
+                '})',
+              ].join('\n')
+            ).string;
+
+        case 'function':
+        default:
+          return new DeclarationBlock({})
+            .export()
+            .asKind('function')
+            .withName(`${name}Schema(): yup.SchemaOf<${name}>`)
+            .withBlock(
+              [
+                indent(`return yup.object({`),
+                indent(`__typename: yup.mixed().oneOf(['${node.name.value}', undefined]),`, 2),
+                shape,
+                indent('})'),
+              ].join('\n')
+            ).string;
+      }
     }),
     EnumTypeDefinition: (node: EnumTypeDefinitionNode) => {
       const enumname = tsVisitor.convertName(node.name.value);

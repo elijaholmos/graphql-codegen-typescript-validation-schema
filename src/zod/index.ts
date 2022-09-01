@@ -57,11 +57,22 @@ export const ZodSchemaVisitor = (schema: GraphQLSchema, config: ValidationSchema
 
       const shape = node.fields?.map(field => generateFieldZodSchema(config, tsVisitor, schema, field, 2)).join(',\n');
 
-      return new DeclarationBlock({})
-        .export()
-        .asKind('function')
-        .withName(`${name}Schema(): z.ZodObject<Properties<${name}>>`)
-        .withBlock([indent(`return z.object({`), shape, indent('})')].join('\n')).string;
+      switch (config.validationSchemaExportType) {
+        case 'const':
+          return new DeclarationBlock({})
+            .export()
+            .asKind('const')
+            .withName(`${name}Schema: z.ZodObject<Properties<${name}>>`)
+            .withContent(['z.object({', shape, '})'].join('\n')).string;
+
+        case 'function':
+        default:
+          return new DeclarationBlock({})
+            .export()
+            .asKind('function')
+            .withName(`${name}Schema(): z.ZodObject<Properties<${name}>>`)
+            .withBlock([indent(`return z.object({`), shape, indent('})')].join('\n')).string;
+      }
     },
     ObjectTypeDefinition: ObjectTypeDefinitionBuilder(config.withObjectType, (node: ObjectTypeDefinitionNode) => {
       const name = tsVisitor.convertName(node.name.value);
@@ -69,18 +80,33 @@ export const ZodSchemaVisitor = (schema: GraphQLSchema, config: ValidationSchema
 
       const shape = node.fields?.map(field => generateFieldZodSchema(config, tsVisitor, schema, field, 2)).join(',\n');
 
-      return new DeclarationBlock({})
-        .export()
-        .asKind('function')
-        .withName(`${name}Schema(): z.ZodObject<Properties<${name}>>`)
-        .withBlock(
-          [
-            indent(`return z.object({`),
-            indent(`__typename: z.literal('${node.name.value}').optional(),`, 2),
-            shape,
-            indent('})'),
-          ].join('\n')
-        ).string;
+      switch (config.validationSchemaExportType) {
+        case 'const':
+          return new DeclarationBlock({})
+            .export()
+            .asKind('const')
+            .withName(`${name}Schema: z.ZodObject<Properties<${name}>>`)
+            .withContent(
+              [`z.object({`, indent(`__typename: z.literal('${node.name.value}').optional(),`, 2), shape, '})'].join(
+                '\n'
+              )
+            ).string;
+
+        case 'function':
+        default:
+          return new DeclarationBlock({})
+            .export()
+            .asKind('function')
+            .withName(`${name}Schema(): z.ZodObject<Properties<${name}>>`)
+            .withBlock(
+              [
+                indent(`return z.object({`),
+                indent(`__typename: z.literal('${node.name.value}').optional(),`, 2),
+                shape,
+                indent('})'),
+              ].join('\n')
+            ).string;
+      }
     }),
     EnumTypeDefinition: (node: EnumTypeDefinitionNode) => {
       const enumname = tsVisitor.convertName(node.name.value);
