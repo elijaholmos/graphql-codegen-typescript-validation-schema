@@ -51,6 +51,24 @@ export const ZodSchemaVisitor = (schema: GraphQLSchema, config: ValidationSchema
           .withName(`${anySchema}`)
           .withContent(`z.any().refine((v) => isDefinedNonNullAny(v))`).string,
       ].join('\n'),
+    EnumTypeDefinition: (node: EnumTypeDefinitionNode) => {
+      const enumname = tsVisitor.convertName(node.name.value);
+      importTypes.push(enumname);
+
+      if (config.enumsAsTypes) {
+        return new DeclarationBlock({})
+          .export()
+          .asKind('const')
+          .withName(`${enumname}Schema`)
+          .withContent(`z.enum([${node.values?.map(enumOption => `'${enumOption.name.value}'`).join(', ')}])`).string;
+      }
+
+      return new DeclarationBlock({})
+        .export()
+        .asKind('const')
+        .withName(`${enumname}Schema`)
+        .withContent(`z.nativeEnum(${enumname})`).string;
+    },
     InputObjectTypeDefinition: (node: InputObjectTypeDefinitionNode) => {
       const name = tsVisitor.convertName(node.name.value);
       importTypes.push(name);
@@ -108,24 +126,6 @@ export const ZodSchemaVisitor = (schema: GraphQLSchema, config: ValidationSchema
             ).string;
       }
     }),
-    EnumTypeDefinition: (node: EnumTypeDefinitionNode) => {
-      const enumname = tsVisitor.convertName(node.name.value);
-      importTypes.push(enumname);
-
-      if (config.enumsAsTypes) {
-        return new DeclarationBlock({})
-          .export()
-          .asKind('const')
-          .withName(`${enumname}Schema`)
-          .withContent(`z.enum([${node.values?.map(enumOption => `'${enumOption.name.value}'`).join(', ')}])`).string;
-      }
-
-      return new DeclarationBlock({})
-        .export()
-        .asKind('const')
-        .withName(`${enumname}Schema`)
-        .withContent(`z.nativeEnum(${enumname})`).string;
-    },
   };
 };
 
@@ -202,23 +202,24 @@ const generateNameNodeZodSchema = (
   node: NameNode
 ): string => {
   const typ = schema.getType(node.value);
+  const enumName = tsVisitor.convertName(typ?.astNode?.name?.value ?? '');
 
-  if (typ?.astNode?.kind === 'InputObjectTypeDefinition') {
-    const enumName = tsVisitor.convertName(typ.astNode.name.value);
-    return `${enumName}Schema()`;
+  switch (typ?.astNode?.kind) {
+    case 'EnumTypeDefinition':
+      return `${enumName}Schema`;
+    case 'InputObjectTypeDefinition':
+    case 'ObjectTypeDefinition':
+      // using switch-case rather than if-else to allow for future expansion
+      switch (config.validationSchemaExportType) {
+        case 'const':
+          return `${enumName}Schema`;
+        case 'function':
+        default:
+          return `${enumName}Schema()`;
+      }
+    default:
+      return zod4Scalar(config, tsVisitor, node.value);
   }
-
-  if (typ?.astNode?.kind === 'ObjectTypeDefinition') {
-    const enumName = tsVisitor.convertName(typ.astNode.name.value);
-    return `${enumName}Schema()`;
-  }
-
-  if (typ?.astNode?.kind === 'EnumTypeDefinition') {
-    const enumName = tsVisitor.convertName(typ.astNode.name.value);
-    return `${enumName}Schema`;
-  }
-
-  return zod4Scalar(config, tsVisitor, node.value);
 };
 
 const maybeLazy = (type: TypeNode, schema: string): string => {
