@@ -3,14 +3,20 @@ import { AttributeInput, ButtonComponentType, ComponentInput, DropDownComponentI
 
 export const definedNonNullAnySchema = myzod.object({});
 
+export const ButtonComponentTypeSchema = myzod.enum(ButtonComponentType);
+
+export const EventOptionTypeSchema = myzod.enum(EventOptionType);
+
+export const HttpMethodSchema = myzod.enum(HttpMethod);
+
+export const PageTypeSchema = myzod.enum(PageType);
+
 export function AttributeInputSchema(): myzod.Type<AttributeInput> {
   return myzod.object({
     key: myzod.string().optional().nullable(),
     val: myzod.string().optional().nullable()
   })
 }
-
-export const ButtonComponentTypeSchema = myzod.enum(ButtonComponentType);
 
 export function ComponentInputSchema(): myzod.Type<ComponentInput> {
   return myzod.object({
@@ -43,16 +49,12 @@ export function EventInputSchema(): myzod.Type<EventInput> {
   })
 }
 
-export const EventOptionTypeSchema = myzod.enum(EventOptionType);
-
 export function HttpInputSchema(): myzod.Type<HttpInput> {
   return myzod.object({
     method: HttpMethodSchema.optional().nullable(),
     url: definedNonNullAnySchema
   })
 }
-
-export const HttpMethodSchema = myzod.enum(HttpMethod);
 
 export function LayoutInputSchema(): myzod.Type<LayoutInput> {
   return myzod.object({
@@ -75,8 +77,6 @@ export function PageInputSchema(): myzod.Type<PageInput> {
     width: myzod.number()
   })
 }
-
-export const PageTypeSchema = myzod.enum(PageType);
 
 export function UserSchema(): myzod.Type<User> {
   return myzod.object({

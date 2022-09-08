@@ -1,14 +1,20 @@
 import * as yup from 'yup'
 import { AttributeInput, ButtonComponentType, ComponentInput, DropDownComponentInput, EventArgumentInput, EventInput, EventOptionType, HttpInput, HttpMethod, LayoutInput, PageInput, PageType, User } from '../types'
 
+export const ButtonComponentTypeSchema = yup.mixed().oneOf([ButtonComponentType.Button, ButtonComponentType.Submit]);
+
+export const EventOptionTypeSchema = yup.mixed().oneOf([EventOptionType.Reload, EventOptionType.Retry]);
+
+export const HttpMethodSchema = yup.mixed().oneOf([HttpMethod.Get, HttpMethod.Post]);
+
+export const PageTypeSchema = yup.mixed().oneOf([PageType.BasicAuth, PageType.Lp, PageType.Restricted, PageType.Service]);
+
 export function AttributeInputSchema(): yup.SchemaOf<AttributeInput> {
   return yup.object({
     key: yup.string(),
     val: yup.string()
   })
 }
-
-export const ButtonComponentTypeSchema = yup.mixed().oneOf([ButtonComponentType.Button, ButtonComponentType.Submit]);
 
 export function ComponentInputSchema(): yup.SchemaOf<ComponentInput> {
   return yup.object({
@@ -41,16 +47,12 @@ export function EventInputSchema(): yup.SchemaOf<EventInput> {
   })
 }
 
-export const EventOptionTypeSchema = yup.mixed().oneOf([EventOptionType.Reload, EventOptionType.Retry]);
-
 export function HttpInputSchema(): yup.SchemaOf<HttpInput> {
   return yup.object({
     method: HttpMethodSchema,
     url: yup.mixed().defined()
   })
 }
-
-export const HttpMethodSchema = yup.mixed().oneOf([HttpMethod.Get, HttpMethod.Post]);
 
 export function LayoutInputSchema(): yup.SchemaOf<LayoutInput> {
   return yup.object({
@@ -73,8 +75,6 @@ export function PageInputSchema(): yup.SchemaOf<PageInput> {
     width: yup.number().defined()
   })
 }
-
-export const PageTypeSchema = yup.mixed().oneOf([PageType.BasicAuth, PageType.Lp, PageType.Restricted, PageType.Service]);
 
 export function UserSchema(): yup.SchemaOf<User> {
   return yup.object({

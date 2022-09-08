@@ -11,14 +11,20 @@ export const isDefinedNonNullAny = (v: any): v is definedNonNullAny => v !== und
 
 export const definedNonNullAnySchema = z.any().refine((v) => isDefinedNonNullAny(v));
 
+export const ButtonComponentTypeSchema = z.nativeEnum(ButtonComponentType);
+
+export const EventOptionTypeSchema = z.nativeEnum(EventOptionType);
+
+export const HttpMethodSchema = z.nativeEnum(HttpMethod);
+
+export const PageTypeSchema = z.nativeEnum(PageType);
+
 export function AttributeInputSchema(): z.ZodObject<Properties<AttributeInput>> {
   return z.object({
     key: z.string().nullish(),
     val: z.string().nullish()
   })
 }
-
-export const ButtonComponentTypeSchema = z.nativeEnum(ButtonComponentType);
 
 export function ComponentInputSchema(): z.ZodObject<Properties<ComponentInput>> {
   return z.object({
@@ -51,16 +57,12 @@ export function EventInputSchema(): z.ZodObject<Properties<EventInput>> {
   })
 }
 
-export const EventOptionTypeSchema = z.nativeEnum(EventOptionType);
-
 export function HttpInputSchema(): z.ZodObject<Properties<HttpInput>> {
   return z.object({
     method: HttpMethodSchema.nullish(),
     url: definedNonNullAnySchema
   })
 }
-
-export const HttpMethodSchema = z.nativeEnum(HttpMethod);
 
 export function LayoutInputSchema(): z.ZodObject<Properties<LayoutInput>> {
   return z.object({
@@ -83,8 +85,6 @@ export function PageInputSchema(): z.ZodObject<Properties<PageInput>> {
     width: z.number()
   })
 }
-
-export const PageTypeSchema = z.nativeEnum(PageType);
 
 export function UserSchema(): z.ZodObject<Properties<User>> {
   return z.object({

@@ -21,6 +21,7 @@ export const ZodSchemaVisitor = (schema: GraphQLSchema, config: ValidationSchema
   const tsVisitor = new TsVisitor(schema, config);
 
   const importTypes: string[] = [];
+  const enumDeclarations: string[] = [];
 
   return {
     buildImports: (): string[] => {
@@ -50,25 +51,8 @@ export const ZodSchemaVisitor = (schema: GraphQLSchema, config: ValidationSchema
           .asKind('const')
           .withName(`${anySchema}`)
           .withContent(`z.any().refine((v) => isDefinedNonNullAny(v))`).string,
+        ...enumDeclarations,
       ].join('\n'),
-    EnumTypeDefinition: (node: EnumTypeDefinitionNode) => {
-      const enumname = tsVisitor.convertName(node.name.value);
-      importTypes.push(enumname);
-
-      if (config.enumsAsTypes) {
-        return new DeclarationBlock({})
-          .export()
-          .asKind('const')
-          .withName(`${enumname}Schema`)
-          .withContent(`z.enum([${node.values?.map(enumOption => `'${enumOption.name.value}'`).join(', ')}])`).string;
-      }
-
-      return new DeclarationBlock({})
-        .export()
-        .asKind('const')
-        .withName(`${enumname}Schema`)
-        .withContent(`z.nativeEnum(${enumname})`).string;
-    },
     InputObjectTypeDefinition: (node: InputObjectTypeDefinitionNode) => {
       const name = tsVisitor.convertName(node.name.value);
       importTypes.push(name);
@@ -126,6 +110,26 @@ export const ZodSchemaVisitor = (schema: GraphQLSchema, config: ValidationSchema
             ).string;
       }
     }),
+    EnumTypeDefinition: (node: EnumTypeDefinitionNode) => {
+      const enumname = tsVisitor.convertName(node.name.value);
+      importTypes.push(enumname);
+
+      // hoist enum declarations
+      enumDeclarations.push(
+        config.enumsAsTypes
+          ? new DeclarationBlock({})
+              .export()
+              .asKind('const')
+              .withName(`${enumname}Schema`)
+              .withContent(`z.enum([${node.values?.map(enumOption => `'${enumOption.name.value}'`).join(', ')}])`)
+              .string
+          : new DeclarationBlock({})
+              .export()
+              .asKind('const')
+              .withName(`${enumname}Schema`)
+              .withContent(`z.nativeEnum(${enumname})`).string
+      );
+    },
   };
 };
 

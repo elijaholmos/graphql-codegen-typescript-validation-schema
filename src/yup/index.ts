@@ -20,6 +20,7 @@ export const YupSchemaVisitor = (schema: GraphQLSchema, config: ValidationSchema
   const tsVisitor = new TsVisitor(schema, config);
 
   const importTypes: string[] = [];
+  const enumDeclarations: string[] = [];
 
   return {
     buildImports: (): string[] => {
@@ -28,7 +29,7 @@ export const YupSchemaVisitor = (schema: GraphQLSchema, config: ValidationSchema
       }
       return [importYup];
     },
-    initialEmit: (): string => '',
+    initialEmit: (): string => '\n' + enumDeclarations.join('\n'),
     InputObjectTypeDefinition: (node: InputObjectTypeDefinitionNode) => {
       const name = tsVisitor.convertName(node.name.value);
       importTypes.push(name);
@@ -93,30 +94,35 @@ export const YupSchemaVisitor = (schema: GraphQLSchema, config: ValidationSchema
       const enumname = tsVisitor.convertName(node.name.value);
       importTypes.push(enumname);
 
+      // hoist enum declarations
       if (config.enumsAsTypes) {
-        return new DeclarationBlock({})
-          .export()
-          .asKind('const')
-          .withName(`${enumname}Schema`)
-          .withContent(
-            `yup.mixed().oneOf([${node.values?.map(enumOption => `'${enumOption.name.value}'`).join(', ')}])`
-          ).string;
+        enumDeclarations.push(
+          new DeclarationBlock({})
+            .export()
+            .asKind('const')
+            .withName(`${enumname}Schema`)
+            .withContent(
+              `yup.mixed().oneOf([${node.values?.map(enumOption => `'${enumOption.name.value}'`).join(', ')}])`
+            ).string
+        );
+      } else {
+        const values = node.values
+          ?.map(
+            enumOption =>
+              `${enumname}.${tsVisitor.convertName(enumOption.name, {
+                useTypesPrefix: false,
+                transformUnderscore: true,
+              })}`
+          )
+          .join(', ');
+        enumDeclarations.push(
+          new DeclarationBlock({})
+            .export()
+            .asKind('const')
+            .withName(`${enumname}Schema`)
+            .withContent(`yup.mixed().oneOf([${values}])`).string
+        );
       }
-
-      const values = node.values
-        ?.map(
-          enumOption =>
-            `${enumname}.${tsVisitor.convertName(enumOption.name, {
-              useTypesPrefix: false,
-              transformUnderscore: true,
-            })}`
-        )
-        .join(', ');
-      return new DeclarationBlock({})
-        .export()
-        .asKind('const')
-        .withName(`${enumname}Schema`)
-        .withContent(`yup.mixed().oneOf([${values}])`).string;
     },
     // ScalarTypeDefinition: (node) => {
     //   const decl = new DeclarationBlock({})
@@ -193,24 +199,24 @@ const generateNameNodeYupSchema = (
   node: NameNode
 ): string => {
   const typ = schema.getType(node.value);
+  const enumName = tsVisitor.convertName(typ?.astNode?.name?.value ?? '');
 
-  if (typ?.astNode?.kind === 'InputObjectTypeDefinition') {
-    const enumName = tsVisitor.convertName(typ.astNode.name.value);
-    return `${enumName}Schema()`;
+  switch (typ?.astNode?.kind) {
+    case 'EnumTypeDefinition':
+      return `${enumName}Schema`;
+    case 'InputObjectTypeDefinition':
+    case 'ObjectTypeDefinition':
+      // using switch-case rather than if-else to allow for future expansion
+      switch (config.validationSchemaExportType) {
+        case 'const':
+          return `${enumName}Schema`;
+        case 'function':
+        default:
+          return `${enumName}Schema()`;
+      }
+    default:
+      return yup4Scalar(config, tsVisitor, node.value);
   }
-
-  if (typ?.astNode?.kind === 'ObjectTypeDefinition') {
-    const enumName = tsVisitor.convertName(typ.astNode.name.value);
-    return `${enumName}Schema()`;
-  }
-
-  if (typ?.astNode?.kind === 'EnumTypeDefinition') {
-    const enumName = tsVisitor.convertName(typ.astNode.name.value);
-    return `${enumName}Schema`;
-  }
-
-  const primitive = yup4Scalar(config, tsVisitor, node.value);
-  return primitive;
 };
 
 const maybeLazy = (type: TypeNode, schema: string): string => {
