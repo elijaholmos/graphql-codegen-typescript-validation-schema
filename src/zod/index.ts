@@ -228,7 +228,7 @@ const generateNameNodeZodSchema = (
 
 const maybeLazy = (type: TypeNode, schema: string): string => {
   if (isNamedType(type) && isInput(type.name.value)) {
-    return `z.lazy(() => ${schema})`;
+    return `z.lazy(() => ${schema}) as z.ZodType<${type.name.value}>`;
   }
   return schema;
 };

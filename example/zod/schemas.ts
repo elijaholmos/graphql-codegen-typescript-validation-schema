@@ -28,9 +28,9 @@ export function AttributeInputSchema(): z.ZodObject<Properties<AttributeInput>> 
 
 export function ComponentInputSchema(): z.ZodObject<Properties<ComponentInput>> {
   return z.object({
-    child: z.lazy(() => ComponentInputSchema().nullish()),
-    childrens: z.array(z.lazy(() => ComponentInputSchema().nullable())).nullish(),
-    event: z.lazy(() => EventInputSchema().nullish()),
+    child: z.lazy(() => ComponentInputSchema().nullish()) as z.ZodType<ComponentInput>,
+    childrens: z.array(z.lazy(() => ComponentInputSchema().nullable()) as z.ZodType<ComponentInput>).nullish(),
+    event: z.lazy(() => EventInputSchema().nullish()) as z.ZodType<EventInput>,
     name: z.string(),
     type: ButtonComponentTypeSchema
   })
@@ -38,8 +38,8 @@ export function ComponentInputSchema(): z.ZodObject<Properties<ComponentInput>> 
 
 export function DropDownComponentInputSchema(): z.ZodObject<Properties<DropDownComponentInput>> {
   return z.object({
-    dropdownComponent: z.lazy(() => ComponentInputSchema().nullish()),
-    getEvent: z.lazy(() => EventInputSchema())
+    dropdownComponent: z.lazy(() => ComponentInputSchema().nullish()) as z.ZodType<ComponentInput>,
+    getEvent: z.lazy(() => EventInputSchema()) as z.ZodType<EventInput>
   })
 }
 
@@ -52,7 +52,7 @@ export function EventArgumentInputSchema(): z.ZodObject<Properties<EventArgument
 
 export function EventInputSchema(): z.ZodObject<Properties<EventInput>> {
   return z.object({
-    arguments: z.array(z.lazy(() => EventArgumentInputSchema())),
+    arguments: z.array(z.lazy(() => EventArgumentInputSchema()) as z.ZodType<EventArgumentInput>),
     options: z.array(EventOptionTypeSchema).nullish()
   })
 }
@@ -66,17 +66,17 @@ export function HttpInputSchema(): z.ZodObject<Properties<HttpInput>> {
 
 export function LayoutInputSchema(): z.ZodObject<Properties<LayoutInput>> {
   return z.object({
-    dropdown: z.lazy(() => DropDownComponentInputSchema().nullish())
+    dropdown: z.lazy(() => DropDownComponentInputSchema().nullish()) as z.ZodType<DropDownComponentInput>
   })
 }
 
 export function PageInputSchema(): z.ZodObject<Properties<PageInput>> {
   return z.object({
-    attributes: z.array(z.lazy(() => AttributeInputSchema())).nullish(),
+    attributes: z.array(z.lazy(() => AttributeInputSchema()) as z.ZodType<AttributeInput>).nullish(),
     date: definedNonNullAnySchema.nullish(),
     height: z.number(),
     id: z.string(),
-    layout: z.lazy(() => LayoutInputSchema()),
+    layout: z.lazy(() => LayoutInputSchema()) as z.ZodType<LayoutInput>,
     pageType: PageTypeSchema,
     postIDs: z.array(z.string()).nullish(),
     show: z.boolean(),
