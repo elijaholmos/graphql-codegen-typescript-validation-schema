@@ -170,7 +170,6 @@ const generateFieldTypeZodSchema = (
     return maybeLazy(type.type, gen);
   }
   if (isNamedType(type)) {
-    console.log('isNamedType', type.name.value, field.name.value, parentType?.kind, field.directives);
     const gen = generateNameNodeZodSchema(config, tsVisitor, schema, type.name);
     if (isListType(parentType)) {
       return `${gen}.nullable()`;
