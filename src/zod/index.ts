@@ -144,6 +144,10 @@ const generateFieldZodSchema = (
   return indent(`${field.name.value}: ${maybeLazy(field.type, gen)}`, indentCount);
 };
 
+const hasNullableDirective = (field: InputValueDefinitionNode | FieldDefinitionNode): boolean => {
+  return field.directives?.find(({ name: { value } }) => value === 'zodNullable') !== undefined;
+};
+
 const generateFieldTypeZodSchema = (
   config: ValidationSchemaPluginConfig,
   tsVisitor: TsVisitor,
@@ -157,7 +161,7 @@ const generateFieldTypeZodSchema = (
     if (!isNonNullType(parentType)) {
       const arrayGen = `z.array(${maybeLazy(type.type, gen)})`;
       const maybeLazyGen = applyDirectives(config, field, arrayGen);
-      return `${maybeLazyGen}.nullish()`;
+      return `${maybeLazyGen}.${hasNullableDirective(field) ? 'nullable' : 'nullish'}()`;
     }
     return `z.array(${maybeLazy(type.type, gen)})`;
   }
@@ -166,6 +170,7 @@ const generateFieldTypeZodSchema = (
     return maybeLazy(type.type, gen);
   }
   if (isNamedType(type)) {
+    console.log('isNamedType', type.name.value, field.name.value, parentType?.kind, field.directives);
     const gen = generateNameNodeZodSchema(config, tsVisitor, schema, type.name);
     if (isListType(parentType)) {
       return `${gen}.nullable()`;
@@ -181,7 +186,7 @@ const generateFieldTypeZodSchema = (
     if (isListType(parentType)) {
       return `${appliedDirectivesGen}.nullable()`;
     }
-    return `${appliedDirectivesGen}.nullish()`;
+    return `${appliedDirectivesGen}.${hasNullableDirective(field) ? 'nullable' : 'nullish'}()`;
   }
   console.warn('unhandled type:', type);
   return '';

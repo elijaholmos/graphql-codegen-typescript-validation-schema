@@ -21,7 +21,7 @@ export const PageTypeSchema = z.nativeEnum(PageType);
 
 export function AttributeInputSchema(): z.ZodObject<Properties<AttributeInput>> {
   return z.object({
-    key: z.string().nullish(),
+    key: z.string().nullable(),
     val: z.string().nullish()
   })
 }
