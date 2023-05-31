@@ -5,146 +5,171 @@ describe('myzod', () => {
   test.each([
     [
       'non-null and defined',
-      /* GraphQL */ `
-        input PrimitiveInput {
-          a: ID!
-          b: String!
-          c: Boolean!
-          d: Int!
-          e: Float!
-        }
-      `,
-      [
-        'export function PrimitiveInputSchema(): myzod.Type<PrimitiveInput> {',
-        'a: myzod.string()',
-        'b: myzod.string()',
-        'c: myzod.boolean()',
-        'd: myzod.number()',
-        'e: myzod.number()',
-      ],
+      {
+        textSchema: /* GraphQL */ `
+          input PrimitiveInput {
+            a: ID!
+            b: String!
+            c: Boolean!
+            d: Int!
+            e: Float!
+          }
+        `,
+        wantContains: [
+          'export function PrimitiveInputSchema(): myzod.Type<PrimitiveInput> {',
+          'a: myzod.string()',
+          'b: myzod.string()',
+          'c: myzod.boolean()',
+          'd: myzod.number()',
+          'e: myzod.number()',
+        ],
+        scalars: {
+          ID: 'string',
+        },
+      },
     ],
     [
       'nullish',
-      /* GraphQL */ `
-        input PrimitiveInput {
-          a: ID
-          b: String
-          c: Boolean
-          d: Int
-          e: Float
-          z: String! # no defined check
-        }
-      `,
-      [
-        'export function PrimitiveInputSchema(): myzod.Type<PrimitiveInput> {',
-        // alphabet order
-        'a: myzod.string().optional().nullable(),',
-        'b: myzod.string().optional().nullable(),',
-        'c: myzod.boolean().optional().nullable(),',
-        'd: myzod.number().optional().nullable(),',
-        'e: myzod.number().optional().nullable(),',
-      ],
+      {
+        textSchema: /* GraphQL */ `
+          input PrimitiveInput {
+            a: ID
+            b: String
+            c: Boolean
+            d: Int
+            e: Float
+            z: String! # no defined check
+          }
+        `,
+        wantContains: [
+          'export function PrimitiveInputSchema(): myzod.Type<PrimitiveInput> {',
+          // alphabet order
+          'a: myzod.string().optional().nullable(),',
+          'b: myzod.string().optional().nullable(),',
+          'c: myzod.boolean().optional().nullable(),',
+          'd: myzod.number().optional().nullable(),',
+          'e: myzod.number().optional().nullable(),',
+        ],
+        scalars: {
+          ID: 'string',
+        },
+      },
     ],
     [
       'array',
-      /* GraphQL */ `
-        input ArrayInput {
-          a: [String]
-          b: [String!]
-          c: [String!]!
-          d: [[String]]
-          e: [[String]!]
-          f: [[String]!]!
-        }
-      `,
-      [
-        'export function ArrayInputSchema(): myzod.Type<ArrayInput> {',
-        'a: myzod.array(myzod.string().nullable()).optional().nullable(),',
-        'b: myzod.array(myzod.string()).optional().nullable(),',
-        'c: myzod.array(myzod.string()),',
-        'd: myzod.array(myzod.array(myzod.string().nullable()).optional().nullable()).optional().nullable(),',
-        'e: myzod.array(myzod.array(myzod.string().nullable())).optional().nullable(),',
-        'f: myzod.array(myzod.array(myzod.string().nullable()))',
-      ],
+      {
+        textSchema: /* GraphQL */ `
+          input ArrayInput {
+            a: [String]
+            b: [String!]
+            c: [String!]!
+            d: [[String]]
+            e: [[String]!]
+            f: [[String]!]!
+          }
+        `,
+        wantContains: [
+          'export function ArrayInputSchema(): myzod.Type<ArrayInput> {',
+          'a: myzod.array(myzod.string().nullable()).optional().nullable(),',
+          'b: myzod.array(myzod.string()).optional().nullable(),',
+          'c: myzod.array(myzod.string()),',
+          'd: myzod.array(myzod.array(myzod.string().nullable()).optional().nullable()).optional().nullable(),',
+          'e: myzod.array(myzod.array(myzod.string().nullable())).optional().nullable(),',
+          'f: myzod.array(myzod.array(myzod.string().nullable()))',
+        ],
+        scalars: undefined,
+      },
     ],
     [
       'ref input object',
-      /* GraphQL */ `
-        input AInput {
-          b: BInput!
-        }
-        input BInput {
-          c: CInput!
-        }
-        input CInput {
-          a: AInput!
-        }
-      `,
-      [
-        'export function AInputSchema(): myzod.Type<AInput> {',
-        'b: myzod.lazy(() => BInputSchema())',
-        'export function BInputSchema(): myzod.Type<BInput> {',
-        'c: myzod.lazy(() => CInputSchema())',
-        'export function CInputSchema(): myzod.Type<CInput> {',
-        'a: myzod.lazy(() => AInputSchema())',
-      ],
+      {
+        textSchema: /* GraphQL */ `
+          input AInput {
+            b: BInput!
+          }
+          input BInput {
+            c: CInput!
+          }
+          input CInput {
+            a: AInput!
+          }
+        `,
+        wantContains: [
+          'export function AInputSchema(): myzod.Type<AInput> {',
+          'b: myzod.lazy(() => BInputSchema())',
+          'export function BInputSchema(): myzod.Type<BInput> {',
+          'c: myzod.lazy(() => CInputSchema())',
+          'export function CInputSchema(): myzod.Type<CInput> {',
+          'a: myzod.lazy(() => AInputSchema())',
+        ],
+        scalars: undefined,
+      },
     ],
     [
       'nested input object',
-      /* GraphQL */ `
-        input NestedInput {
-          child: NestedInput
-          childrens: [NestedInput]
-        }
-      `,
-      [
-        'export function NestedInputSchema(): myzod.Type<NestedInput> {',
-        'child: myzod.lazy(() => NestedInputSchema().optional().nullable()),',
-        'childrens: myzod.array(myzod.lazy(() => NestedInputSchema().nullable())).optional().nullable()',
-      ],
+      {
+        textSchema: /* GraphQL */ `
+          input NestedInput {
+            child: NestedInput
+            childrens: [NestedInput]
+          }
+        `,
+        wantContains: [
+          'export function NestedInputSchema(): myzod.Type<NestedInput> {',
+          'child: myzod.lazy(() => NestedInputSchema().optional().nullable()),',
+          'childrens: myzod.array(myzod.lazy(() => NestedInputSchema().nullable())).optional().nullable()',
+        ],
+        scalars: undefined,
+      },
     ],
     [
       'enum',
-      /* GraphQL */ `
-        enum PageType {
-          PUBLIC
-          BASIC_AUTH
-        }
-        input PageInput {
-          pageType: PageType!
-        }
-      `,
-      [
-        'export const PageTypeSchema = myzod.enum(PageType)',
-        'export function PageInputSchema(): myzod.Type<PageInput> {',
-        'pageType: PageTypeSchema',
-      ],
+      {
+        textSchema: /* GraphQL */ `
+          enum PageType {
+            PUBLIC
+            BASIC_AUTH
+          }
+          input PageInput {
+            pageType: PageType!
+          }
+        `,
+        wantContains: [
+          'export const PageTypeSchema = myzod.enum(PageType)',
+          'export function PageInputSchema(): myzod.Type<PageInput> {',
+          'pageType: PageTypeSchema',
+        ],
+        scalars: undefined,
+      },
     ],
     [
       'camelcase',
-      /* GraphQL */ `
-        input HTTPInput {
-          method: HTTPMethod
-          url: URL!
-        }
+      {
+        textSchema: /* GraphQL */ `
+          input HTTPInput {
+            method: HTTPMethod
+            url: URL!
+          }
 
-        enum HTTPMethod {
-          GET
-          POST
-        }
+          enum HTTPMethod {
+            GET
+            POST
+          }
 
-        scalar URL # unknown scalar, should be any (definedNonNullAnySchema)
-      `,
-      [
-        'export function HttpInputSchema(): myzod.Type<HttpInput> {',
-        'export const HttpMethodSchema = myzod.enum(HttpMethod)',
-        'method: HttpMethodSchema',
-        'url: definedNonNullAnySchema',
-      ],
+          scalar URL # unknown scalar, should be any (definedNonNullAnySchema)
+        `,
+        wantContains: [
+          'export function HttpInputSchema(): myzod.Type<HttpInput> {',
+          'export const HttpMethodSchema = myzod.enum(HttpMethod)',
+          'method: HttpMethodSchema',
+          'url: definedNonNullAnySchema',
+        ],
+        scalars: undefined,
+      },
     ],
-  ])('%s', async (_, textSchema, wantContains) => {
+  ])('%s', async (_, { textSchema, wantContains, scalars }) => {
     const schema = buildSchema(textSchema);
-    const result = await plugin(schema, [], { schema: 'myzod' }, {});
+    const result = await plugin(schema, [], { schema: 'myzod', scalars }, {});
     expect(result.prepend).toContain("import * as myzod from 'myzod'");
 
     for (const wantContain of wantContains) {
@@ -197,6 +222,26 @@ describe('myzod', () => {
     expect(result.content).toContain('phrase: myzod.string()');
   });
 
+  it('with importFrom & useTypeImports', async () => {
+    const schema = buildSchema(/* GraphQL */ `
+      input Say {
+        phrase: String!
+      }
+    `);
+    const result = await plugin(
+      schema,
+      [],
+      {
+        schema: 'myzod',
+        importFrom: './types',
+        useTypeImports: true,
+      },
+      {}
+    );
+    expect(result.prepend).toContain("import type { Say } from './types'");
+    expect(result.content).toContain('phrase: myzod.string()');
+  });
+
   it('with enumsAsTypes', async () => {
     const schema = buildSchema(/* GraphQL */ `
       enum PageType {
@@ -232,6 +277,9 @@ describe('myzod', () => {
       {
         schema: 'myzod',
         notAllowEmptyString: true,
+        scalars: {
+          ID: 'string',
+        },
       },
       {}
     );
@@ -480,6 +528,10 @@ describe('myzod', () => {
           date: Date!
           email: Email!
         }
+        input UsernameUpdateInput {
+          updateInputId: ID!
+          updateName: String!
+        }
         type User {
           id: ID!
           name: String
@@ -511,6 +563,12 @@ describe('myzod', () => {
             Date: 'myzod.date()',
             Email: 'myzod.string().email()',
           },
+          scalars: {
+            ID: {
+              input: 'number',
+              output: 'string',
+            },
+          },
         },
         {}
       );
@@ -520,6 +578,10 @@ describe('myzod', () => {
         'name: myzod.string(),',
         'date: myzod.date(),',
         'email: myzod.string().email()',
+        // Username Update Input
+        'export function UsernameUpdateInputSchema(): myzod.Type<UsernameUpdateInput> {',
+        'updateInputId: myzod.number(),',
+        'updateName: myzod.string()',
         // User
         'export function UserSchema(): myzod.Type<User> {',
         "__typename: myzod.literal('User').optional(),",
@@ -539,90 +601,136 @@ describe('myzod', () => {
       }
     });
 
-    it('exports as const instead of func', async () => {
+    it('generate union types', async () => {
       const schema = buildSchema(/* GraphQL */ `
-        input Say {
-          phrase: String!
+        type Square {
+          size: Int
         }
+        type Circle {
+          radius: Int
+        }
+        union Shape = Circle | Square
       `);
-      const result = await plugin(
-        schema,
-        [],
-        {
-          schema: 'myzod',
-          validationSchemaExportType: 'const',
-        },
-        {}
-      );
-      expect(result.content).toContain('export const SaySchema: myzod.Type<Say> = myzod.object({');
-    });
 
-    it('generate both input & type, export as const', async () => {
-      const schema = buildSchema(/* GraphQL */ `
-        scalar Date
-        scalar Email
-        input UserCreateInput {
-          name: String!
-          date: Date!
-          email: Email!
-        }
-        type User {
-          id: ID!
-          name: String
-          age: Int
-          email: Email
-          isMember: Boolean
-          createdAt: Date!
-        }
-
-        type Mutation {
-          _empty: String
-        }
-
-        type Query {
-          _empty: String
-        }
-
-        type Subscription {
-          _empty: String
-        }
-      `);
       const result = await plugin(
         schema,
         [],
         {
           schema: 'myzod',
           withObjectType: true,
-          scalarSchemas: {
-            Date: 'myzod.date()',
-            Email: 'myzod.string().email()',
-          },
-          validationSchemaExportType: 'const',
         },
         {}
       );
+
       const wantContains = [
-        // User Create Input
-        'export const UserCreateInputSchema: myzod.Type<UserCreateInput> = myzod.object({',
-        'name: myzod.string(),',
-        'date: myzod.date(),',
-        'email: myzod.string().email()',
-        // User
-        'export const UserSchema: myzod.Type<User> = myzod.object({',
-        "__typename: myzod.literal('User').optional(),",
-        'id: myzod.string(),',
-        'name: myzod.string().optional().nullable(),',
-        'age: myzod.number().optional().nullable(),',
-        'email: myzod.string().email().optional().nullable(),',
-        'isMember: myzod.boolean().optional().nullable(),',
-        'createdAt: myzod.date()',
+        // Shape Schema
+        'export function ShapeSchema() {',
+        'return myzod.union([CircleSchema(), SquareSchema()])',
+        '}',
       ];
       for (const wantContain of wantContains) {
         expect(result.content).toContain(wantContain);
       }
+    });
 
-      for (const wantNotContain of ['Query', 'Mutation', 'Subscription']) {
-        expect(result.content).not.toContain(wantNotContain);
+    it('generate union types with single element', async () => {
+      const schema = buildSchema(/* GraphQL */ `
+        type Square {
+          size: Int
+        }
+        type Circle {
+          radius: Int
+        }
+        union Shape = Circle | Square
+
+        type Geometry {
+          shape: Shape
+        }
+      `);
+
+      const result = await plugin(
+        schema,
+        [],
+        {
+          schema: 'myzod',
+          withObjectType: true,
+        },
+        {}
+      );
+
+      const wantContains = [
+        'export function GeometrySchema(): myzod.Type<Geometry> {',
+        'return myzod.object({',
+        "__typename: myzod.literal('Geometry').optional(),",
+        'shape: ShapeSchema().optional().nullable()',
+        '}',
+      ];
+      for (const wantContain of wantContains) {
+        expect(result.content).toContain(wantContain);
+      }
+    });
+
+    it('correctly reference generated union types', async () => {
+      const schema = buildSchema(/* GraphQL */ `
+        type Circle {
+          radius: Int
+        }
+        union Shape = Circle
+      `);
+
+      const result = await plugin(
+        schema,
+        [],
+        {
+          schema: 'myzod',
+          withObjectType: true,
+        },
+        {}
+      );
+
+      const wantContains = [
+        // Shape Schema
+        'export function ShapeSchema() {',
+        'return CircleSchema()',
+        '}',
+      ];
+      for (const wantContain of wantContains) {
+        expect(result.content).toContain(wantContain);
+      }
+    });
+
+    it('generate enum union types', async () => {
+      const schema = buildSchema(/* GraphQL */ `
+        enum PageType {
+          PUBLIC
+          BASIC_AUTH
+        }
+
+        enum MethodType {
+          GET
+          POST
+        }
+
+        union AnyType = PageType | MethodType
+      `);
+
+      const result = await plugin(
+        schema,
+        [],
+        {
+          schema: 'myzod',
+          withObjectType: true,
+        },
+        {}
+      );
+
+      const wantContains = [
+        'export function AnyTypeSchema() {',
+        'return myzod.union([PageTypeSchema, MethodTypeSchema])',
+        '}',
+      ];
+      for (const wantContain of wantContains) {
+        expect(result.content).toContain(wantContain);
       }
     });
   });

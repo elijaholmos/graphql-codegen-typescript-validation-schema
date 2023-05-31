@@ -1,15 +1,14 @@
-import * as myzod from 'myzod'
-import { AttributeInput, ButtonComponentType, ComponentInput, DropDownComponentInput, EventArgumentInput, EventInput, EventOptionType, HttpInput, HttpMethod, LayoutInput, PageInput, PageType, User } from '../types'
+import * as myzod from 'myzod';
+import { Admin, AttributeInput, ButtonComponentType, ComponentInput, DropDownComponentInput, EventArgumentInput, EventInput, EventOptionType, Guest, HttpInput, HttpMethod, LayoutInput, PageInput, PageType, User } from '../types';
 
 export const definedNonNullAnySchema = myzod.object({});
 
-export const ButtonComponentTypeSchema = myzod.enum(ButtonComponentType);
-
-export const EventOptionTypeSchema = myzod.enum(EventOptionType);
-
-export const HttpMethodSchema = myzod.enum(HttpMethod);
-
-export const PageTypeSchema = myzod.enum(PageType);
+export function AdminSchema(): myzod.Type<Admin> {
+  return myzod.object({
+    __typename: myzod.literal('Admin').optional(),
+    lastModifiedAt: definedNonNullAnySchema.optional().nullable()
+  })
+}
 
 export function AttributeInputSchema(): myzod.Type<AttributeInput> {
   return myzod.object({
@@ -17,6 +16,8 @@ export function AttributeInputSchema(): myzod.Type<AttributeInput> {
     val: myzod.string().optional().nullable()
   })
 }
+
+export const ButtonComponentTypeSchema = myzod.enum(ButtonComponentType);
 
 export function ComponentInputSchema(): myzod.Type<ComponentInput> {
   return myzod.object({
@@ -49,12 +50,23 @@ export function EventInputSchema(): myzod.Type<EventInput> {
   })
 }
 
+export const EventOptionTypeSchema = myzod.enum(EventOptionType);
+
+export function GuestSchema(): myzod.Type<Guest> {
+  return myzod.object({
+    __typename: myzod.literal('Guest').optional(),
+    lastLoggedIn: definedNonNullAnySchema.optional().nullable()
+  })
+}
+
 export function HttpInputSchema(): myzod.Type<HttpInput> {
   return myzod.object({
     method: HttpMethodSchema.optional().nullable(),
     url: definedNonNullAnySchema
   })
 }
+
+export const HttpMethodSchema = myzod.enum(HttpMethod);
 
 export function LayoutInputSchema(): myzod.Type<LayoutInput> {
   return myzod.object({
@@ -78,14 +90,21 @@ export function PageInputSchema(): myzod.Type<PageInput> {
   })
 }
 
+export const PageTypeSchema = myzod.enum(PageType);
+
 export function UserSchema(): myzod.Type<User> {
   return myzod.object({
     __typename: myzod.literal('User').optional(),
     createdAt: definedNonNullAnySchema.optional().nullable(),
     email: myzod.string().optional().nullable(),
     id: myzod.string().optional().nullable(),
+    kind: UserKindSchema().optional().nullable(),
     name: myzod.string().optional().nullable(),
     password: myzod.string().optional().nullable(),
     updatedAt: definedNonNullAnySchema.optional().nullable()
   })
+}
+
+export function UserKindSchema() {
+  return myzod.union([AdminSchema(), GuestSchema()])
 }

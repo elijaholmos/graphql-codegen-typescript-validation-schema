@@ -26,9 +26,15 @@ generates:
       # You can put the config for typescript plugin here
       # see: https://www.graphql-code-generator.com/plugins/typescript
       strictScalars: true
+      # Overrides built-in ID scalar to both input and output types as string.
+      # see: https://the-guild.dev/graphql/codegen/plugins/typescript/typescript#scalars
+      scalars:
+        ID: string
       # You can also write the config for this plugin together
       schema: yup # or zod
 ```
+
+It is recommended to write `scalars` config for built-in type `ID`, as in the yaml example shown above. For more information: [#375](https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema/pull/375)
 
 You can check [example](https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema/tree/main/example) directory if you want to see more complex config example or how is generated some files.
 
@@ -276,3 +282,18 @@ export function ExampleInputSchema(): z.ZodSchema<ExampleInput> {
 #### other schema
 
 Please see [example](https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema/tree/main/example) directory.
+
+## Notes
+
+Their is currently a compatibility issue with the client-preset. A workaround for this is to split the generation into two (one for client-preset and one for typescript-validation-schema).
+
+```yml
+generates:
+  path/to/graphql.ts:
+    plugins:
+      - typescript-validation-schema
+  /path/to/graphql/:
+    preset: 'client',
+      plugins:
+      ...
+```
