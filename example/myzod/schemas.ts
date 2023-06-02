@@ -1,7 +1,15 @@
-import * as myzod from 'myzod';
-import { Admin, AttributeInput, ButtonComponentType, ComponentInput, DropDownComponentInput, EventArgumentInput, EventInput, EventOptionType, Guest, HttpInput, HttpMethod, LayoutInput, PageInput, PageType, User } from '../types';
+import * as myzod from 'myzod'
+import { Admin, AttributeInput, ButtonComponentType, ComponentInput, DropDownComponentInput, EventArgumentInput, EventInput, EventOptionType, Guest, HttpInput, HttpMethod, LayoutInput, PageInput, PageType, User } from '../types'
 
 export const definedNonNullAnySchema = myzod.object({});
+
+export const ButtonComponentTypeSchema = myzod.enum(ButtonComponentType);
+
+export const EventOptionTypeSchema = myzod.enum(EventOptionType);
+
+export const HttpMethodSchema = myzod.enum(HttpMethod);
+
+export const PageTypeSchema = myzod.enum(PageType);
 
 export function AdminSchema(): myzod.Type<Admin> {
   return myzod.object({
@@ -16,8 +24,6 @@ export function AttributeInputSchema(): myzod.Type<AttributeInput> {
     val: myzod.string().optional().nullable()
   })
 }
-
-export const ButtonComponentTypeSchema = myzod.enum(ButtonComponentType);
 
 export function ComponentInputSchema(): myzod.Type<ComponentInput> {
   return myzod.object({
@@ -50,8 +56,6 @@ export function EventInputSchema(): myzod.Type<EventInput> {
   })
 }
 
-export const EventOptionTypeSchema = myzod.enum(EventOptionType);
-
 export function GuestSchema(): myzod.Type<Guest> {
   return myzod.object({
     __typename: myzod.literal('Guest').optional(),
@@ -65,8 +69,6 @@ export function HttpInputSchema(): myzod.Type<HttpInput> {
     url: definedNonNullAnySchema
   })
 }
-
-export const HttpMethodSchema = myzod.enum(HttpMethod);
 
 export function LayoutInputSchema(): myzod.Type<LayoutInput> {
   return myzod.object({
@@ -89,8 +91,6 @@ export function PageInputSchema(): myzod.Type<PageInput> {
     width: myzod.number()
   })
 }
-
-export const PageTypeSchema = myzod.enum(PageType);
 
 export function UserSchema(): myzod.Type<User> {
   return myzod.object({

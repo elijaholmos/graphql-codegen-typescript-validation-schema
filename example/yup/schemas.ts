@@ -1,6 +1,14 @@
 import * as yup from 'yup'
 import { Admin, AttributeInput, ButtonComponentType, ComponentInput, DropDownComponentInput, EventArgumentInput, EventInput, EventOptionType, Guest, HttpInput, HttpMethod, LayoutInput, PageInput, PageType, User, UserKind } from '../types'
 
+export const ButtonComponentTypeSchema = yup.string<ButtonComponentType>().oneOf([ButtonComponentType.Button, ButtonComponentType.Submit]).defined();
+
+export const EventOptionTypeSchema = yup.string<EventOptionType>().oneOf([EventOptionType.Reload, EventOptionType.Retry]).defined();
+
+export const HttpMethodSchema = yup.string<HttpMethod>().oneOf([HttpMethod.Get, HttpMethod.Post]).defined();
+
+export const PageTypeSchema = yup.string<PageType>().oneOf([PageType.BasicAuth, PageType.Lp, PageType.Restricted, PageType.Service]).defined();
+
 function union<T extends {}>(...schemas: ReadonlyArray<yup.Schema<T>>): yup.MixedSchema<T> {
   return yup.mixed<T>().test({
     test: (value) => schemas.some((schema) => schema.isValidSync(value))
@@ -20,8 +28,6 @@ export function AttributeInputSchema(): yup.ObjectSchema<AttributeInput> {
     val: yup.string().defined().nullable().optional()
   })
 }
-
-export const ButtonComponentTypeSchema = yup.string<ButtonComponentType>().oneOf([ButtonComponentType.Button, ButtonComponentType.Submit]).defined();
 
 export function ComponentInputSchema(): yup.ObjectSchema<ComponentInput> {
   return yup.object({
@@ -54,8 +60,6 @@ export function EventInputSchema(): yup.ObjectSchema<EventInput> {
   })
 }
 
-export const EventOptionTypeSchema = yup.string<EventOptionType>().oneOf([EventOptionType.Reload, EventOptionType.Retry]).defined();
-
 export function GuestSchema(): yup.ObjectSchema<Guest> {
   return yup.object({
     __typename: yup.string<'Guest'>().optional(),
@@ -69,8 +73,6 @@ export function HttpInputSchema(): yup.ObjectSchema<HttpInput> {
     url: yup.mixed().nonNullable()
   })
 }
-
-export const HttpMethodSchema = yup.string<HttpMethod>().oneOf([HttpMethod.Get, HttpMethod.Post]).defined();
 
 export function LayoutInputSchema(): yup.ObjectSchema<LayoutInput> {
   return yup.object({
@@ -93,8 +95,6 @@ export function PageInputSchema(): yup.ObjectSchema<PageInput> {
     width: yup.number().defined().nonNullable()
   })
 }
-
-export const PageTypeSchema = yup.string<PageType>().oneOf([PageType.BasicAuth, PageType.Lp, PageType.Restricted, PageType.Service]).defined();
 
 export function UserSchema(): yup.ObjectSchema<User> {
   return yup.object({
