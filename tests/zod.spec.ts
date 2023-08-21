@@ -1,4 +1,7 @@
-import { buildSchema } from 'graphql';
+import { getCachedDocumentNodeFromSchema } from '@graphql-codegen/plugin-helpers';
+import { buildClientSchema, buildSchema, introspectionFromSchema, isSpecifiedScalarType } from 'graphql';
+import { dedent } from 'ts-dedent';
+
 import { plugin } from '../src/index';
 
 describe('zod', () => {
@@ -294,6 +297,37 @@ describe('zod', () => {
     for (const wantContain of wantContains) {
       expect(result.content).toContain(wantContain);
     }
+  });
+
+  it('with notAllowEmptyString issue #386', async () => {
+    const schema = buildSchema(/* GraphQL */ `
+      input InputOne {
+        field: InputNested!
+      }
+
+      input InputNested {
+        field: String!
+      }
+    `);
+    const result = await plugin(
+      schema,
+      [],
+      {
+        schema: 'zod',
+        notAllowEmptyString: true,
+        scalars: {
+          ID: 'string',
+        },
+      },
+      {}
+    );
+    const wantContain = dedent`
+    export function InputNestedSchema(): z.ZodObject<Properties<InputNested>> {
+      return z.object({
+        field: z.string().min(1)
+      })
+    }`;
+    expect(result.content).toContain(wantContain);
   });
 
   it('with scalarSchemas', async () => {
@@ -837,6 +871,38 @@ describe('zod', () => {
         expect(result.content).toContain(wantContain);
       }
     });
+
+    it('with object arguments', async () => {
+      const schema = buildSchema(/* GraphQL */ `
+        type MyType {
+          foo(a: String, b: Int!, c: Boolean, d: Float!, e: Text): String
+        }
+        scalar Text
+      `);
+      const result = await plugin(
+        schema,
+        [],
+        {
+          schema: 'zod',
+          withObjectType: true,
+          scalars: {
+            Text: 'string',
+          },
+        },
+        {}
+      );
+      const wantContain = dedent`
+      export function MyTypeFooArgsSchema(): z.ZodObject<Properties<MyTypeFooArgs>> {
+        return z.object({
+          a: z.string().nullish(),
+          b: z.number(),
+          c: z.boolean().nullish(),
+          d: z.number(),
+          e: z.string().nullish()
+        })
+      }`;
+      expect(result.content).toContain(wantContain);
+    });
   });
 
   it('properly generates custom directive values', async () => {
@@ -955,5 +1021,42 @@ describe('zod', () => {
     for (const wantNotContain of ['Query', 'Mutation', 'Subscription']) {
       expect(result.content).not.toContain(wantNotContain);
     }
+  });
+
+  it('issue #394', async () => {
+    const schema = buildSchema(/* GraphQL */ `
+      enum Test {
+        A
+        B
+      }
+
+      type Query {
+        _dummy: Test
+      }
+
+      input QueryInput {
+        _dummy: Test
+      }
+    `);
+    const query = introspectionFromSchema(schema);
+    const clientSchema = buildClientSchema(query);
+    const result = await plugin(
+      clientSchema,
+      [],
+      {
+        schema: 'zod',
+        scalars: {
+          ID: 'string',
+        },
+      },
+      {}
+    );
+    const wantContain = dedent`
+    export function QueryInputSchema(): z.ZodObject<Properties<QueryInput>> {
+      return z.object({
+        _dummy: TestSchema.nullish()
+      })
+    }`;
+    expect(result.content).toContain(wantContain);
   });
 });

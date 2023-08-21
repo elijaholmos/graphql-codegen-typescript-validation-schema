@@ -1,4 +1,6 @@
-import { buildSchema } from 'graphql';
+import { buildClientSchema, buildSchema, introspectionFromSchema } from 'graphql';
+import dedent from 'ts-dedent';
+
 import { plugin } from '../src/index';
 
 describe('myzod', () => {
@@ -294,6 +296,37 @@ describe('myzod', () => {
     for (const wantContain of wantContains) {
       expect(result.content).toContain(wantContain);
     }
+  });
+
+  it('with notAllowEmptyString issue #386', async () => {
+    const schema = buildSchema(/* GraphQL */ `
+      input InputOne {
+        field: InputNested!
+      }
+
+      input InputNested {
+        field: String!
+      }
+    `);
+    const result = await plugin(
+      schema,
+      [],
+      {
+        schema: 'myzod',
+        notAllowEmptyString: true,
+        scalars: {
+          ID: 'string',
+        },
+      },
+      {}
+    );
+    const wantContain = dedent`
+    export function InputNestedSchema(): myzod.Type<InputNested> {
+      return myzod.object({
+        field: myzod.string().min(1)
+      })
+    }`;
+    expect(result.content).toContain(wantContain);
   });
 
   it('with scalarSchemas', async () => {
@@ -770,6 +803,38 @@ describe('myzod', () => {
         expect(result.content).toContain(wantContain);
       }
     });
+
+    it('with object arguments', async () => {
+      const schema = buildSchema(/* GraphQL */ `
+        type MyType {
+          foo(a: String, b: Int!, c: Boolean, d: Float!, e: Text): String
+        }
+        scalar Text
+      `);
+      const result = await plugin(
+        schema,
+        [],
+        {
+          schema: 'myzod',
+          withObjectType: true,
+          scalars: {
+            Text: 'string',
+          },
+        },
+        {}
+      );
+      const wantContain = dedent`
+      export function MyTypeFooArgsSchema(): myzod.Type<MyTypeFooArgs> {
+        return myzod.object({
+          a: myzod.string().optional().nullable(),
+          b: myzod.number(),
+          c: myzod.boolean().optional().nullable(),
+          d: myzod.number(),
+          e: myzod.string().optional().nullable()
+        })
+      }`;
+      expect(result.content).toContain(wantContain);
+    });
   });
 
   it('properly generates custom directive values', async () => {
@@ -888,5 +953,42 @@ describe('myzod', () => {
     for (const wantNotContain of ['Query', 'Mutation', 'Subscription']) {
       expect(result.content).not.toContain(wantNotContain);
     }
+  });
+
+  it('issue #394', async () => {
+    const schema = buildSchema(/* GraphQL */ `
+      enum Test {
+        A
+        B
+      }
+
+      type Query {
+        _dummy: Test
+      }
+
+      input QueryInput {
+        _dummy: Test
+      }
+    `);
+    const query = introspectionFromSchema(schema);
+    const clientSchema = buildClientSchema(query);
+    const result = await plugin(
+      clientSchema,
+      [],
+      {
+        schema: 'myzod',
+        scalars: {
+          ID: 'string',
+        },
+      },
+      {}
+    );
+    const wantContain = dedent`
+    export function QueryInputSchema(): myzod.Type<QueryInput> {
+      return myzod.object({
+        _dummy: TestSchema.optional().nullable()
+      })
+    }`;
+    expect(result.content).toContain(wantContain);
   });
 });

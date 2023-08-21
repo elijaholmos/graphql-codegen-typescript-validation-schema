@@ -1,5 +1,5 @@
-import { z } from 'zod'
-import { Admin, AttributeInput, ButtonComponentType, ComponentInput, DropDownComponentInput, EventArgumentInput, EventInput, EventOptionType, Guest, HttpInput, HttpMethod, LayoutInput, PageInput, PageType, User } from '../types'
+import { z } from 'zod';
+import { Admin, AttributeInput, ButtonComponentType, ComponentInput, DropDownComponentInput, EventArgumentInput, EventInput, EventOptionType, Guest, HttpInput, HttpMethod, LayoutInput, MyType, MyTypeFooArgs, PageInput, PageType, User } from '../types';
 
 type Properties<T> = Required<{
   [K in keyof T]: z.ZodType<T[K], any, T[K]>;
@@ -28,7 +28,7 @@ export function AdminSchema(): z.ZodObject<Properties<Admin>> {
 
 export function AttributeInputSchema(): z.ZodObject<Properties<AttributeInput>> {
   return z.object({
-    key: z.string().nullable(),
+    key: z.string().nullish(),
     val: z.string().nullish()
   })
 }
@@ -81,6 +81,22 @@ export function HttpInputSchema(): z.ZodObject<Properties<HttpInput>> {
 export function LayoutInputSchema(): z.ZodObject<Properties<LayoutInput>> {
   return z.object({
     dropdown: z.lazy(() => DropDownComponentInputSchema().nullish())
+  })
+}
+
+export function MyTypeSchema(): z.ZodObject<Properties<MyType>> {
+  return z.object({
+    __typename: z.literal('MyType').optional(),
+    foo: z.string().nullish()
+  })
+}
+
+export function MyTypeFooArgsSchema(): z.ZodObject<Properties<MyTypeFooArgs>> {
+  return z.object({
+    a: z.string().nullish(),
+    b: z.number(),
+    c: z.boolean().nullish(),
+    d: z.number()
   })
 }
 

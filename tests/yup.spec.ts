@@ -1,4 +1,6 @@
-import { buildSchema } from 'graphql';
+import { buildClientSchema, buildSchema, introspectionFromSchema } from 'graphql';
+import dedent from 'ts-dedent';
+
 import { plugin } from '../src/index';
 
 describe('yup', () => {
@@ -291,6 +293,37 @@ describe('yup', () => {
     for (const wantContain of wantContains) {
       expect(result.content).toContain(wantContain);
     }
+  });
+
+  it('with notAllowEmptyString issue #386', async () => {
+    const schema = buildSchema(/* GraphQL */ `
+      input InputOne {
+        field: InputNested!
+      }
+
+      input InputNested {
+        field: String!
+      }
+    `);
+    const result = await plugin(
+      schema,
+      [],
+      {
+        schema: 'yup',
+        notAllowEmptyString: true,
+        scalars: {
+          ID: 'string',
+        },
+      },
+      {}
+    );
+    const wantContain = dedent`
+    export function InputNestedSchema(): yup.ObjectSchema<InputNested> {
+      return yup.object({
+        field: yup.string().defined().required()
+      })
+    }`;
+    expect(result.content).toContain(wantContain);
   });
 
   it('with scalarSchemas', async () => {
@@ -684,6 +717,38 @@ describe('yup', () => {
         expect(result.content).toContain(wantContain);
       }
     });
+
+    it('with object arguments', async () => {
+      const schema = buildSchema(/* GraphQL */ `
+        type MyType {
+          foo(a: String, b: Int!, c: Boolean, d: Float!, e: Text): String
+        }
+        scalar Text
+      `);
+      const result = await plugin(
+        schema,
+        [],
+        {
+          schema: 'yup',
+          withObjectType: true,
+          scalars: {
+            Text: 'string',
+          },
+        },
+        {}
+      );
+      const wantContain = dedent`
+      export function MyTypeFooArgsSchema(): yup.ObjectSchema<MyTypeFooArgs> {
+        return yup.object({
+          a: yup.string().defined().nullable().optional(),
+          b: yup.number().defined().nonNullable(),
+          c: yup.boolean().defined().nullable().optional(),
+          d: yup.number().defined().nonNullable(),
+          e: yup.string().defined().nullable().optional()
+        })
+      }`;
+      expect(result.content).toContain(wantContain);
+    });
   });
 
   it('properly generates custom directive values', async () => {
@@ -802,5 +867,42 @@ describe('yup', () => {
     for (const wantNotContain of ['Query', 'Mutation', 'Subscription']) {
       expect(result.content).not.toContain(wantNotContain);
     }
+  });
+
+  it('issue #394', async () => {
+    const schema = buildSchema(/* GraphQL */ `
+      enum Test {
+        A
+        B
+      }
+
+      type Query {
+        _dummy: Test
+      }
+
+      input QueryInput {
+        _dummy: Test
+      }
+    `);
+    const query = introspectionFromSchema(schema);
+    const clientSchema = buildClientSchema(query);
+    const result = await plugin(
+      clientSchema,
+      [],
+      {
+        schema: 'yup',
+        scalars: {
+          ID: 'string',
+        },
+      },
+      {}
+    );
+    const wantContain = dedent`
+    export function QueryInputSchema(): yup.ObjectSchema<QueryInput> {
+      return yup.object({
+        _dummy: TestSchema.nullable().optional()
+      })
+    }`;
+    expect(result.content).toContain(wantContain);
   });
 });

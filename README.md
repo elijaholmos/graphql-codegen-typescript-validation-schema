@@ -86,6 +86,14 @@ import { GeneratedInput } from './graphql'
 /* generates validation schema here */
 ```
 
+### `useTypeImports`
+
+type: `boolean` default: `false`
+
+Will use `import type {}` rather than `import {}` when importing generated TypeScript types.
+This gives compatibility with TypeScript's "importsNotUsedAsValues": "error" option.
+Should used in conjunction with `importFrom` option.
+
 ### `typesPrefix`
 
 type: `string` default: (empty)
@@ -187,6 +195,12 @@ Generates validation schema with GraphQL type objects. But excludes `Query`, `Mu
 It is currently added for the purpose of using simple objects. See also [#20](https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema/issues/20#issuecomment-1058969191), [#107](https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema/issues/107).
 
 This option currently **does not support fragment** generation. If you are interested, send me PR would be greatly appreciated!
+
+### `validationSchemaExportType`
+
+type: `ValidationSchemaExportType` default: `'function'`
+
+Specify validation schema export type.
 
 ### `directives`
 
